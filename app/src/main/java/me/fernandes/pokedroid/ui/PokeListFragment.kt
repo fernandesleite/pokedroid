@@ -23,9 +23,10 @@ class PokeListFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = PokeListFragmentBinding.inflate(layoutInflater)
         adapter = PokeListAdapter()
+        adapter.setHasStableIds(true)
         return binding.root
     }
 
@@ -37,10 +38,11 @@ class PokeListFragment : Fragment() {
 
     private fun initializeView() {
         binding.apply {
-            pokemonList.layoutManager = GridLayoutManager(context, 4)
+            pokemonList.layoutManager = GridLayoutManager(context, 3)
             pokemonList.adapter = adapter
         }
         viewModel.getPokemonList()
+        adapter.onLoadMoreTriggered = { viewModel.getPokemonList() }
     }
 
     private fun initializeObservers() {

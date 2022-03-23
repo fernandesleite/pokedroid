@@ -6,6 +6,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import me.fernandes.pokedroid.R
 import me.fernandes.pokedroid.data.remote.Pokemon
 import me.fernandes.pokedroid.databinding.PokemonListItemBinding
 
@@ -14,16 +16,20 @@ class PokeListAdapter() : ListAdapter<Pokemon, PokeListAdapter.ViewHolder>(Pokem
     class ViewHolder(val binding: PokemonListItemBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(pokemon: Pokemon) {
             binding.pokemonName.text = pokemon.name.replaceFirstChar { char -> char.uppercase() }
-
             Glide
                 .with(binding.root.context)
                 .load(pokemon.spriteUrl)
                 .fitCenter()
-                .into(binding.pokemonSprite);
+                .placeholder(R.drawable.missing_no_error_icon)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(binding.pokemonSprite)
         }
 
     }
 
+    override fun getItemId(position: Int): Long {
+        return getItem(position).id.toLong()
+    }
 
     object PokemonDiff : DiffUtil.ItemCallback<Pokemon>() {
         override fun areItemsTheSame(oldItem: Pokemon, newItem: Pokemon): Boolean {
@@ -31,9 +37,8 @@ class PokeListAdapter() : ListAdapter<Pokemon, PokeListAdapter.ViewHolder>(Pokem
         }
 
         override fun areContentsTheSame(oldItem: Pokemon, newItem: Pokemon): Boolean {
-            return oldItem.name == newItem.name
+            return oldItem.id == newItem.id
         }
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -44,5 +49,11 @@ class PokeListAdapter() : ListAdapter<Pokemon, PokeListAdapter.ViewHolder>(Pokem
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position))
+
+        if (position == (itemCount - 45)) {
+            onLoadMoreTriggered?.invoke()
+        }
     }
+
+    var onLoadMoreTriggered: (() -> Unit)? = null
 }

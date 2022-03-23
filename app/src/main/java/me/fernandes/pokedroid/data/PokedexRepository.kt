@@ -12,10 +12,10 @@ class PokedexRepository @Inject constructor(
     private val api: PokedexApi
 ) {
 
-    val loadPokemonFromServer: Flow<Response<PokemonListWrapper>> = flow {
+    fun loadPokemonFromServer(offset: Int): Flow<Response<PokemonListWrapper>> = flow {
         emit(Response.Loading())
         try {
-            emit(Response.Success(data = api.getPokemonList()))
+            emit(Response.Success(data = api.getPokemonList(offset)))
         } catch (error: HttpException) {
             emit(Response.NetworkError(error.code(), error.message()))
         } catch (error: IOException) {

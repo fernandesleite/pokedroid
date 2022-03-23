@@ -5,7 +5,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.fernandes.pokedroid.data.PokedexRepository
 import me.fernandes.pokedroid.data.remote.Pokemon
@@ -28,16 +27,23 @@ class PokeListViewModel @Inject constructor(
     val loading: LiveData<Boolean>
         get() = _loading
 
+    private var offset = 0
+    private var localPokemonList = mutableListOf<Pokemon>()
+
     fun getPokemonList() {
         viewModelScope.launch {
-            repository.loadPokemonFromServer.collect {
+            repository.loadPokemonFromServer(offset).collect {
                 _loading.value = false
                 when (it) {
                     is Response.Success -> {
-                        it.data?.results?.map { pokemon ->
-                            setSpriteUrl(pokemon)
+                        it.data?.let { data ->
+                            val results = data.results
+                            if (results.isNotEmpty()) {
+                                updateList(results)
+                            } else {
+                                _loading.value = false
+                            }
                         }
-                        _pokemonList.value = it.data?.results ?: emptyList()
                     }
                     is Response.NetworkError -> {
                         _errorText.value = "Network Error: ${it.codeError}"
@@ -47,18 +53,26 @@ class PokeListViewModel @Inject constructor(
                     }
                     is Response.Loading -> {
                         _loading.value = true
-                        delay(1000L)
                     }
                 }
             }
         }
     }
 
-    private fun setSpriteUrl(pokemon: Pokemon) {
-        val imageUrl =
-            pokemon.url.replace("https://pokeapi.co/api/v2/pokemon/", "")
-                .removeSuffix("/")
-        pokemon.spriteUrl =
-            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${imageUrl}.png"
+    private fun updateList(results: List<Pokemon>) {
+        setSpriteUrl(results)
+        localPokemonList.addAll(results)
+        _pokemonList.value = localPokemonList
+        offset += 90
+    }
+
+    private fun setSpriteUrl(results: List<Pokemon>) {
+        results.map { pokemon ->
+            val urlToRemove = "https://pokeapi.co/api/v2/pokemon/"
+            val imgId = pokemon.url.replace(urlToRemove, "").removeSuffix("/")
+            pokemon.spriteUrl =
+                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${imgId}.png"
+            pokemon.id = imgId
+        }
     }
 }
