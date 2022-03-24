@@ -9,7 +9,10 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import me.fernandes.pokedroid.databinding.PokeListFragmentBinding
+import me.fernandes.pokedroid.navigation.Navigation
 import me.fernandes.pokedroid.viewmodel.PokeListViewModel
+import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class PokeListFragment : Fragment() {
@@ -20,11 +23,14 @@ class PokeListFragment : Fragment() {
 
     private lateinit var adapter: PokeListAdapter
 
+    @Inject
+    lateinit var navigation: Navigation
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = PokeListFragmentBinding.inflate(layoutInflater)
+        binding = PokeListFragmentBinding.inflate(inflater)
         adapter = PokeListAdapter()
         adapter.setHasStableIds(true)
         return binding.root
@@ -67,11 +73,12 @@ class PokeListFragment : Fragment() {
         }
     }
 
-    private fun handleErrorScreen(error: String?) {
-        binding.apply {
-            pokemonList.visibility = View.GONE
-            errorScreen.visibility = View.VISIBLE
-            errorMessage.text = error
-        }
+    private fun handleErrorScreen(error: String) {
+        navigation.navigateToErrorScreen(error)
+    }
+
+    companion object {
+        @JvmStatic
+        fun newInstance() = PokeListFragment()
     }
 }
